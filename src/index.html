@@ -1,0 +1,51 @@
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>英単語タイピング（Tauri）</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="./main.js" defer></script>
+  </head>
+
+  <body>
+    <main class="container">
+      <h1>英単語タイピング（Tauri）</h1>
+
+      <div class="row">
+        <a href="https://tauri.app" target="_blank">
+          <img src="/assets/tauri.svg" class="logo tauri" alt="Tauri logo" />
+        </a>
+        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
+          <img src="/assets/javascript.svg" class="logo vanilla" alt="JavaScript logo" />
+        </a>
+      </div>
+
+      <div id="game-container">
+        <div id="status-bar">
+          <span id="score">正解: 0</span>
+          <span id="best-score" style="margin-left:1em">最高: -</span>
+        </div>
+
+        <div id="question-area">
+          <p id="japanese-word">読み込み中...</p>
+        </div>
+
+        <input type="text" id="typing-input" placeholder="ここに英語を入力" autocomplete="off" disabled>
+        <p id="message"></p>
+      </div>
+
+      <div id="start-screen" class="overlay">
+        <div class="overlay-content">
+          <h2>英単語タイピングチャレンジ</h2>
+          <p>日本語の単語に対応する英単語を入力してね。Enterで判定します。</p>
+          <button id="start-button">ゲームスタート</button>
+        </div>
+      </div>
+
+    </main>
+  </body>
+</html>
+      </div>
+
