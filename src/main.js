@@ -23,14 +23,17 @@ const DEFAULT_WORDS = [];
 
 // DOM 要素
 const japaneseWordEl = document.getElementById('japanese-word');
-const typingInputEl = document.getElementById('typing-input');
 const startButtonEl = document.getElementById('start-button');
 const scoreEl = document.getElementById('score');
 const messageEl = document.getElementById('message');
 const bestScoreEl = document.getElementById('best-score');
+const fallingArea = document.getElementById('falling-area');
+const typingInput = document.getElementById('typing-input');
 
 let WORDS = [];
 let currentIndex = 0;
+let currentFallingElement = null;
+let currentProblem = null;
 let score = 0;
 let isPlaying = false;
 
@@ -103,16 +106,17 @@ function updateScore() {
 function showWord() {
     const w = WORDS[currentIndex];
     japaneseWordEl.textContent = w ? w.ja : '---';
-    typingInputEl.value = '';
+    typingInput.value = '';
     messageEl.textContent = '';
 }
 
 function endGame() {
     isPlaying = false;
-    typingInputEl.disabled = true;
+    typingInput.disabled = true;
     startButtonEl.disabled = false;
+    document.body.classList.remove('playing');
     japaneseWordEl.textContent = 'お疲れ様でした！';
-    messageEl.textContent = `結果: 正解 ${score} / ${WORDS.length}`;
+    alert(`ゲーム終了！\nスコア: ${score} / ${WORDS.length}`);
     const best = Number(localStorage.getItem('bestScore') || 0);
     if (score > best) {
         localStorage.setItem('bestScore', String(score));
@@ -123,26 +127,26 @@ function endGame() {
     }
 }
 
-function checkAnswer() {
-    if (!isPlaying) return;
-    const w = WORDS[currentIndex];
-    if (!w) return;
-    const answer = typingInputEl.value.trim().toLowerCase();
-    const correct = (w.en || '').toLowerCase();
-    if (answer === correct) {
-        score++;
-        currentIndex++;
-        updateScore();
-        if (currentIndex >= WORDS.length) {
-            endGame();
-        } else {
-            showWord();
-        }
-    } else {
-        messageEl.textContent = '間違いです。もう一度！';
-        typingInputEl.select();
-    }
-}
+// function checkAnswer() {
+//     if (!isPlaying) return;
+//     const w = WORDS[currentIndex];
+//     if (!w) return;
+//     const answer = typingInputEl.value.trim().toLowerCase();
+//     const correct = (w.en || '').toLowerCase();
+//     if (answer === correct) {
+//         score++;
+//         currentIndex++;
+//         updateScore();
+//         if (currentIndex >= WORDS.length) {
+//             endGame();
+//         } else {
+//             showWord();
+//         }
+//     } else {
+//         messageEl.textContent = '間違いです。もう一度！';
+//         typingInputEl.select();
+//     }
+// }
 
 function startGame() {
     if (!WORDS || WORDS.length === 0) return;
@@ -150,31 +154,91 @@ function startGame() {
     currentIndex = 0;
     score = 0;
     isPlaying = true;
-    updateScore();
-    // trigger UI transition
+    scoreEl.textContent = `正解: ${score}`;
+    fallingArea.innerHTML = '';
     document.body.classList.add('playing');
     startButtonEl.disabled = true;
-    typingInputEl.disabled = false;
     // focus after transition for nicer UX
-    setTimeout(() => typingInputEl.focus(), 250);
+    setTimeout(() => typingInput.focus(), 250);
+    typingInput.disabled = false;
     const best = Number(localStorage.getItem('bestScore') || 0);
     bestScoreEl.textContent = best > 0 ? `最高: ${best}` : '最高: -';
     showWord();
+    setTimeout(() => {
+        typingInput.focus();
+        spawnWord();
+    }, 300);
 }
+
+function spawnWord() {
+    if (!isPlaying || currentIndex >= WORDS.length) {
+        if (currentIndex >= WORDS.length) endGame();
+        return;
+    }
+
+    // 1. 問題をランダムに選択
+    const wordData = WORDS[currentIndex];
+
+    // 2. HTML要素を作成
+    const wordEl = document.createElement('div');
+    wordEl.classList.add('falling-word');
+    wordEl.textContent = wordData.ja;
+
+    // 3. 横方向の開始位置をランダムに設定
+    const randomLeft = Math.random() * 75;
+    wordEl.style.left = `${randomLeft + 5}%`;
+
+    // 4. エリアに追加（これでCSSアニメーションが自動開始）
+    fallingArea.appendChild(wordEl);
+    currentFallingElement = wordEl;
+
+    wordEl.addEventListener('animationend', () => {
+        if (isPlaying && wordEl.parentNode) {
+            handleMiss(wordEl);
+        }
+    });
+}
+
+function handleSuccess() {
+    if (!currentFallingElement) return;
+    score++;
+    scoreEl.textContent = `正解: ${score}`;
+    currentFallingElement.classList.add('solved');
+    const target = currentFallingElement;
+    setTimeout(() => {
+      if (target.parentNode) fallingArea.removeChild(target);
+    }, 200);
+    currentFallingElement = null;
+    typingInput.value = '';
+    currentIndex++;
+    spawnWord();
+}
+
+
+function handleMiss(element) {
+    if (element.parentNode) {
+        fallingArea.removeChild(element);
+    }
+    currentFallingElement = null;
+    spawnWord();
+    typingInput.value = '';
+    currentIndex++;
+}
+
+
 
 // イベント登録
 window.addEventListener('DOMContentLoaded', () => {
     loadWords();
 
-    startButtonEl.addEventListener('click', (e) => {
-        e.preventDefault();
-        startGame();
-    });
+    startButtonEl.addEventListener('click', startGame);
 
-    typingInputEl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            checkAnswer();
+    typingInput.addEventListener('input', (e) => {
+        if (!isPlaying || currentIndex >= WORDS.length) return;
+        const input = e.target.value.trim().toLowerCase();
+        const target = WORDS[currentIndex].en.toLowerCase();
+        if (input === target) {
+            handleSuccess();
         }
     });
 });
