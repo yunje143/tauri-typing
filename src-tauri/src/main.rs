@@ -71,11 +71,8 @@ fn find_default_json() -> Option<std::path::PathBuf> {
     None
 }
 
-
-
 fn main() {
     tauri::Builder::default()
-        // ★ 定義したコマンドを登録する ★
         .invoke_handler(tauri::generate_handler![load_words_data])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

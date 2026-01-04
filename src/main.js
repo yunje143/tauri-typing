@@ -127,27 +127,6 @@ function endGame() {
     }
 }
 
-// function checkAnswer() {
-//     if (!isPlaying) return;
-//     const w = WORDS[currentIndex];
-//     if (!w) return;
-//     const answer = typingInputEl.value.trim().toLowerCase();
-//     const correct = (w.en || '').toLowerCase();
-//     if (answer === correct) {
-//         score++;
-//         currentIndex++;
-//         updateScore();
-//         if (currentIndex >= WORDS.length) {
-//             endGame();
-//         } else {
-//             showWord();
-//         }
-//     } else {
-//         messageEl.textContent = '間違いです。もう一度！';
-//         typingInputEl.select();
-//     }
-// }
-
 function startGame() {
     if (!WORDS || WORDS.length === 0) return;
     shuffleWords();
@@ -206,39 +185,46 @@ function handleSuccess() {
     currentFallingElement.classList.add('solved');
     const target = currentFallingElement;
     setTimeout(() => {
-      if (target.parentNode) fallingArea.removeChild(target);
+        if (target.parentNode) fallingArea.removeChild(target);
     }, 200);
     currentFallingElement = null;
-    typingInput.value = '';
-    currentIndex++;
-    spawnWord();
+    prepareNextTurn();
 }
-
 
 function handleMiss(element) {
     if (element.parentNode) {
         fallingArea.removeChild(element);
     }
     currentFallingElement = null;
-    spawnWord();
-    typingInput.value = '';
-    currentIndex++;
+    prepareNextTurn();
 }
 
-
+function prepareNextTurn() {
+    currentIndex++;
+    typingInput.value = '';
+    typingInput.focus();
+    showWord();
+    spawnWord();
+}
 
 // イベント登録
 window.addEventListener('DOMContentLoaded', () => {
     loadWords();
-
     startButtonEl.addEventListener('click', startGame);
 
-    typingInput.addEventListener('input', (e) => {
+    typingInput.addEventListener('keydown', (e) => {
         if (!isPlaying || currentIndex >= WORDS.length) return;
-        const input = e.target.value.trim().toLowerCase();
-        const target = WORDS[currentIndex].en.toLowerCase();
-        if (input === target) {
-            handleSuccess();
+
+        if (e.key === 'Enter') {
+            const input = e.target.value.trim().toLowerCase();
+            const target = WORDS[currentIndex].en.toLowerCase();
+            if (input === target) {
+                handleSuccess();
+            } else {
+                messageEl.textContent = "아니요! 다시 입력해주세요!";
+                typingInput.value = '';
+            }
         }
+
     });
 });
